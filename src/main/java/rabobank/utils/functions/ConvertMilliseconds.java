@@ -1,10 +1,11 @@
 package rabobank.utils.functions;
 
-import rabobank.utils.formatter.FormatTime;
+import rabobank.utils.formatter.TimeFormatter;
 import rabobank.utils.functions.model.Time;
 
 public class ConvertMilliseconds {
-    public static String convert(int milliSec, FormatTime format) {
+
+    public static String convert(int milliSec, TimeFormatter format) {
 
         int seconds = milliSec / 1000;
         int minutes = seconds / 60;

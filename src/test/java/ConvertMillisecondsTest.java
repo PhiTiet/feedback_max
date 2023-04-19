@@ -1,95 +1,98 @@
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import rabobank.utils.formatter.FormatTimeLong;
-import rabobank.utils.formatter.FormatTimeShort;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import rabobank.utils.formatter.TimeFormatterLong;
+import rabobank.utils.formatter.TimeFormatterShort;
 import rabobank.utils.functions.ConvertMilliseconds;
+
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ConvertMillisecondsTest {
 
-    @Test
+import java.util.stream.Stream;
+
+class ConvertMillisecondsTest {
+
+    @ParameterizedTest()
+    @MethodSource("getTestTimesLongWithoutZeroes")
     @DisplayName("Test converter with formatter TimeLong don't show zeroes")
-    public void ConvertFormatTimeLongNoZeroTest() {
-        assertEquals("3 minutes 34 seconds", ConvertMilliseconds.convert(3*60*1000+34*1000,new FormatTimeLong(false)));
-        assertEquals("1 hours 5 minutes", ConvertMilliseconds.convert(1*60*60*1000+5*60*1000,new FormatTimeLong(false)));
-        assertEquals("3 hours 59 seconds", ConvertMilliseconds.convert(3*60*60*1000+59*1000,new FormatTimeLong(false)));
-        assertEquals("3 hours 2 minutes 59 seconds", ConvertMilliseconds.convert(3*60*60*1000+2*60*1000+59*1000,new FormatTimeLong(false)));
+    public void ConvertFormatTimeLongNoZeroTest(int milliseconds, String expected) {
+        TimeFormatterLong timeFormatterLongHideZero = TimeFormatterLong.builder().showZero(false).build();
 
-        // 0 milliseconds
-        assertEquals("", ConvertMilliseconds.convert(0*60*60*1000+0*60*1000+0*1000,new FormatTimeLong(false)));
-
-        // 576 milliseconds
-        assertEquals("", ConvertMilliseconds.convert(0*60*60*1000+0*60*1000+0*1000+576,new FormatTimeLong(false)));
+        assertEquals(ConvertMilliseconds.convert(milliseconds,timeFormatterLongHideZero),expected);
     }
 
-    @Test
+    private static Stream<Arguments> getTestTimesLongWithoutZeroes(){
+        return Stream.of(
+                Arguments.of(timeToMillis(0,3,34),"3 minutes 34 seconds" ),
+                Arguments.of(timeToMillis(1,5,0), "1 hours 5 minutes"),
+                Arguments.of(timeToMillis(3,0,59), "3 hours 59 seconds"),
+                Arguments.of(timeToMillis(3,2,59), "3 hours 2 minutes 59 seconds"),
+                Arguments.of(0, ""),
+                Arguments.of(999, "")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getTestTimesLongWithZeroes")
     @DisplayName("Test converter with formatter TimeLong show zeroes")
-    public void ConvertFormatTimeLongShowZeroTest() {
-        assertEquals("0 hours 3 minutes 34 seconds", ConvertMilliseconds.convert(3*60*1000+34*1000,new FormatTimeLong(true)));
-        assertEquals("1 hours 5 minutes 0 seconds", ConvertMilliseconds.convert(1*60*60*1000+5*60*1000,new FormatTimeLong(true)));
-        assertEquals("3 hours 0 minutes 59 seconds", ConvertMilliseconds.convert(3*60*60*1000+59*1000,new FormatTimeLong(true)));
-        assertEquals("3 hours 2 minutes 59 seconds", ConvertMilliseconds.convert(3*60*60*1000+2*60*1000+59*1000,new FormatTimeLong(true)));
+    public void ConvertFormatTimeLongShowZeroTest(int milliseconds, String expected) {
+        TimeFormatterLong timeFormatterLongShowZero = TimeFormatterLong.builder().build();
+        assertEquals(ConvertMilliseconds.convert(milliseconds,timeFormatterLongShowZero),expected);
 
-        // 0 milliseconds
-        assertEquals("0 hours 0 minutes 0 seconds", ConvertMilliseconds.convert(0*60*60*1000+0*60*1000+0*1000,new FormatTimeLong(true)));
-
-        // 576 milliseconds
-        assertEquals("0 hours 0 minutes 0 seconds", ConvertMilliseconds.convert(0*60*60*1000+0*60*1000+0*1000+576,new FormatTimeLong(true)));
-
-        assertEquals("0 hours 3 minutes 34 seconds", ConvertMilliseconds.convert(3*60*1000+34*1000,new FormatTimeLong()));
-        assertEquals("1 hours 5 minutes 0 seconds", ConvertMilliseconds.convert(1*60*60*1000+5*60*1000,new FormatTimeLong()));
-        assertEquals("3 hours 0 minutes 59 seconds", ConvertMilliseconds.convert(3*60*60*1000+59*1000,new FormatTimeLong()));
-        assertEquals("3 hours 2 minutes 59 seconds", ConvertMilliseconds.convert(3*60*60*1000+2*60*1000+59*1000,new FormatTimeLong()));
-
-        // 0 milliseconds
-        assertEquals("0 hours 0 minutes 0 seconds", ConvertMilliseconds.convert(0*60*60*1000+0*60*1000+0*1000,new FormatTimeLong()));
-
-        // 576 milliseconds
-        assertEquals("0 hours 0 minutes 0 seconds", ConvertMilliseconds.convert(0*60*60*1000+0*60*1000+0*1000+576,new FormatTimeLong()));
+    }
+    private static Stream<Arguments> getTestTimesLongWithZeroes(){
+        return Stream.of(
+                Arguments.of(timeToMillis(0,3,34), "0 hours 3 minutes 34 seconds" ),
+                Arguments.of(timeToMillis(1,5,0), "1 hours 5 minutes 0 seconds"),
+                Arguments.of(timeToMillis(3,0,59), "3 hours 0 minutes 59 seconds"),
+                Arguments.of(timeToMillis(3,2,59), "3 hours 2 minutes 59 seconds"),
+                Arguments.of(0, "0 hours 0 minutes 0 seconds"),
+                Arguments.of(999, "0 hours 0 minutes 0 seconds")
+        );
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getTestTimesShortWithoutZeroes")
     @DisplayName("Test converter with formatter TimeShort don't show zeroes")
-    public void ConvertFormatTimeshortNoZeroTest() {
-        assertEquals("3m 34s", ConvertMilliseconds.convert(3*60*1000+34*1000,new FormatTimeShort(false)));
-        assertEquals("1h 5m", ConvertMilliseconds.convert(1*60*60*1000+5*60*1000,new FormatTimeShort(false)));
-        assertEquals("3h 59s", ConvertMilliseconds.convert(3*60*60*1000+59*1000,new FormatTimeShort(false)));
-        assertEquals("3h 2m 59s", ConvertMilliseconds.convert(3*60*60*1000+2*60*1000+59*1000,new FormatTimeShort(false)));
-        assertEquals("2h 3m 34s", ConvertMilliseconds.convert(2*60*60*1000+3*60*1000+34*1000,new FormatTimeShort(false)));
+    public void ConvertFormatTimeShortNoZeroTest(int milliseconds, String expected) {
+        TimeFormatterShort timeFormatterShortHideZero = TimeFormatterShort.builder().showZero(false).build();
 
-        // 0 milliseconds
-        assertEquals("", ConvertMilliseconds.convert(0*60*60*1000+0*60*1000+0*1000,new FormatTimeShort(false)));
+        assertEquals(ConvertMilliseconds.convert(milliseconds,timeFormatterShortHideZero),expected);
+    }
+    private static Stream<Arguments> getTestTimesShortWithoutZeroes(){
+        return Stream.of(
+                Arguments.of(timeToMillis(0,3,34), "3m 34s" ),
+                Arguments.of(timeToMillis(1,5,0), "1h 5m"),
+                Arguments.of(timeToMillis(3,0,59), "3h 59s"),
+                Arguments.of(timeToMillis(3,2,59), "3h 2m 59s"),
+                Arguments.of(0, ""),
+                Arguments.of(999, "")
+        );
+    }
+    @ParameterizedTest
+    @MethodSource("getTestTimesShortWithZeroes")
+    @DisplayName("Test converter with formatter TimeShort don't show zeroes")
+    public void ConvertFormatTimeShortShowZeroTest(int milliseconds, String expected) {
+        TimeFormatterShort timeFormatterShortShowZero = TimeFormatterShort.builder().build();
 
-        // 576 milliseconds
-        assertEquals("", ConvertMilliseconds.convert(0*60*60*1000+0*60*1000+0*1000+576,new FormatTimeShort(false)));
+        assertEquals(ConvertMilliseconds.convert(milliseconds,timeFormatterShortShowZero),expected);
     }
 
-    @Test
-    @DisplayName("Test converter with formatter TimeShort don't show zeroes")
-    public void ConvertFormatTimeshortShowZeroTest() {
-        assertEquals("0h 3m 34s", ConvertMilliseconds.convert(3*60*1000+34*1000,new FormatTimeShort(true)));
-        assertEquals("1h 5m 0s", ConvertMilliseconds.convert(1*60*60*1000+5*60*1000,new FormatTimeShort(true)));
-        assertEquals("3h 0m 59s", ConvertMilliseconds.convert(3*60*60*1000+59*1000,new FormatTimeShort(true)));
-        assertEquals("3h 2m 59s", ConvertMilliseconds.convert(3*60*60*1000+2*60*1000+59*1000,new FormatTimeShort(true)));
-        assertEquals("2h 3m 34s", ConvertMilliseconds.convert(2*60*60*1000+3*60*1000+34*1000,new FormatTimeShort(true)));
+    private static Stream<Arguments> getTestTimesShortWithZeroes(){
+        return Stream.of(
+                Arguments.of(timeToMillis(0,3,34), "0h 3m 34s" ),
+                Arguments.of(timeToMillis(1,5,0), "1h 5m 0s"),
+                Arguments.of(timeToMillis(3,0,59), "3h 0m 59s"),
+                Arguments.of(timeToMillis(3,2,59), "3h 2m 59s"),
+                Arguments.of(0, "0h 0m 0s"),
+                Arguments.of(999, "0h 0m 0s")
+        );
+    }
 
-        // 0 milliseconds
-        assertEquals("0h 0m 0s", ConvertMilliseconds.convert(0*60*60*1000+0*60*1000+0*1000,new FormatTimeShort(true)));
-
-        // 576 milliseconds
-        assertEquals("0h 0m 0s", ConvertMilliseconds.convert(0*60*60*1000+0*60*1000+0*1000+576,new FormatTimeShort(true)));
-
-        assertEquals("0h 3m 34s", ConvertMilliseconds.convert(3*60*1000+34*1000,new FormatTimeShort()));
-        assertEquals("1h 5m 0s", ConvertMilliseconds.convert(1*60*60*1000+5*60*1000,new FormatTimeShort()));
-        assertEquals("3h 0m 59s", ConvertMilliseconds.convert(3*60*60*1000+59*1000,new FormatTimeShort()));
-        assertEquals("3h 2m 59s", ConvertMilliseconds.convert(3*60*60*1000+2*60*1000+59*1000,new FormatTimeShort()));
-        assertEquals("2h 3m 34s", ConvertMilliseconds.convert(2*60*60*1000+3*60*1000+34*1000,new FormatTimeShort()));
-
-        // 0 milliseconds
-        assertEquals("0h 0m 0s", ConvertMilliseconds.convert(0*60*60*1000+0*60*1000+0*1000,new FormatTimeShort()));
-
-        // 576 milliseconds
-        assertEquals("0h 0m 0s", ConvertMilliseconds.convert(0*60*60*1000+0*60*1000+0*1000+576,new FormatTimeShort()));
+    private static int timeToMillis(int hours, int minutes, int seconds) {
+        return hours * 3600000 + minutes * 60000 + seconds * 1000;
     }
 }
